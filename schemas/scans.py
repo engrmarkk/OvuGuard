@@ -1,0 +1,77 @@
+from pydantic import BaseModel, HttpUrl, model_serializer
+from typing import List, Dict, Any, Optional
+from datetime import datetime
+from enum import Enum
+from helpers import format_datetime
+
+
+class ScanStatus(str, Enum):
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+class ScanCreate(BaseModel):
+    url: str
+    endpoints: List[Dict[str, str]]
+    scan_types: Optional[List[str]] = [
+        "sql_injection",
+        "xss",
+        "ssrf",
+        "security_headers",
+        "rate_limit",
+    ]
+
+
+class ScanResponse(BaseModel):
+    id: str
+    url: str
+    status: ScanStatus
+    progress: float
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class Vulnerability(BaseModel):
+    type: str
+    severity: str
+    parameter: Optional[str] = None
+    payload: Optional[str] = None
+    evidence: Optional[str] = None
+    http_method: Optional[str] = None
+    url: Optional[str] = None
+    status_code: Optional[int] = None
+
+
+class ScanResultResponse(BaseModel):
+    id: str
+    url: str
+    status: ScanStatus
+    created_at: Any
+    scan_duration: Optional[float] = None
+    total_vulnerabilities: int
+    critical_count: int
+    high_count: int
+    medium_count: int
+    low_count: int
+    security_score: float
+    discovered_endpoints: Optional[List[Dict[str, Any]]] = []
+    vulnerabilities: Optional[List[Dict[str, Any]]] = []
+
+    class Config:
+        from_attributes = True
+
+    @model_serializer
+    def serialize_model(self):
+        data = self.__dict__.copy()
+        if self.created_at:
+            data["created_at"] = format_datetime(self.created_at)
+        return data
+
+
+class ScanListResponse(BaseModel):
+    scans: List[ScanResponse]
+    total: int
