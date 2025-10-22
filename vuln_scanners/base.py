@@ -1,3 +1,86 @@
+import pymetasploit3.msfrpc as msfrpc
+import requests
+from urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter
+
+# Store original __init__
+_original_init = msfrpc.MsfRpcClient.__init__
+
+
+def _fixed_init(self, password, **kwargs):
+    """Complete fix for Metasploit Docker connectivity"""
+    # Get the actual server (default to 'metasploit' for Docker)
+    server = kwargs.get("server", "metasploit")
+    port = kwargs.get("port", 55553)
+
+    # Force the server to be used
+    kwargs["server"] = server
+
+    # Call original init
+    _original_init(self, password, **kwargs)
+
+    # COMPLETELY rebuild the client with proper URL and session
+    self.host = server
+    self.port = port
+    self.ssl = kwargs.get("ssl", False)
+
+    # Set the correct URI
+    if self.ssl:
+        self.uri = f"https://{server}:{port}/api/"
+    else:
+        self.uri = f"http://{server}:{port}/api/"
+
+    # Create a proper session with retries
+    self.session = requests.Session()
+    retry_strategy = Retry(
+        total=3,
+        backoff_factor=1,
+        status_forcelist=[429, 500, 502, 503, 504],
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    self.session.mount("http://", adapter)
+    self.session.mount("https://", adapter)
+
+    # Set headers
+    self.headers = {"Content-type": "binary/message-pack"}
+
+
+# Replace the post_request method to use our fixed URI
+def _fixed_post_request(self, url, payload):
+    """Fix the relative URL issue and use correct session"""
+    # If URL is relative, use our full URI
+    if url.startswith("/"):
+        target_url = self.uri
+    else:
+        target_url = url
+
+    # Debug: print available session attributes
+    print(f"🔧 DEBUG - Available session attributes:")
+    for attr in dir(self):
+        if "session" in attr.lower():
+            print(f"  - {attr}: {type(getattr(self, attr))}")
+
+    # Try to find the correct session object
+    if hasattr(self, "session") and hasattr(self.session, "post"):
+        session_obj = self.session
+    elif hasattr(self, "_session") and hasattr(self._session, "post"):
+        session_obj = self._session
+    else:
+        # Fallback: create new session
+        import requests
+
+        session_obj = requests.Session()
+        self.session = session_obj
+
+    return session_obj.post(
+        target_url, data=payload, headers=self.headers, verify=False
+    )
+
+
+msfrpc.MsfRpcClient.__init__ = _fixed_init
+msfrpc.MsfRpcClient.post_request = _fixed_post_request
+
+
 # base.py
 import json
 import time
