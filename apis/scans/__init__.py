@@ -9,37 +9,54 @@ from database import get_db
 from security import get_current_user
 from models import Users, ScanResult
 from helpers import format_datetime
+from services.vuln_services import VulnServices
 
 scan_router = APIRouter(prefix="/scan", tags=["Scans"])
 
+vuln_services = VulnServices()
 
-@scan_router.post("/scans", response_model=scan_schema.ScanResponse)
+
+@scan_router.post("/scans", response_model=scan_schema.ApiResponse)
 async def create_scan(
     scan_data: scan_schema.ScanCreate,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: Users = Depends(get_current_user),
 ):
-    """Start a new vulnerability scan"""
-    scanner_service = ScannerService()
+    try:
+        url = scan_data.url
+        swagger_url = scan_data.doc_url
+        scan_types = scan_data.scan_types
 
-    scan_id = await scanner_service.start_scan(
-        url=scan_data.url,
-        user_id=current_user.id,
-        scan_types=scan_data.scan_types,
-        endpoints=scan_data.endpoints,
-    )
+        res = vuln_services.check_valid_doc(swagger_url)
+        if not res:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid Documentation URL",
+            )
 
-    # Get the created scan record
-    scan_record = scanner_service.get_scan_status(scan_id, current_user.id)
+        user_id = current_user.id
 
-    return scan_schema.ScanResponse(
-        scan_id=scan_record.id,
-        url=scan_record.url,
-        status=scan_record.status,
-        progress=scan_record.progress,
-        created_at=scan_record.created_at,
-    )
+        background_tasks.add_task(
+            vuln_services._start,
+            url,
+            swagger_url,
+            scan_types,
+            user_id,
+        )
+
+        return scan_schema.ApiResponse(
+            msg="Scan started successfully",
+            data={"scan_id": ""},
+        )
+    except HTTPException as http_exc:
+        logger.info(f"Create Scan exception: {http_exc}")
+        raise http_exc
+    except Exception as e:
+        logger.exception(f"Create Scan exception")
+        return HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Network Error"
+        )
 
 
 @scan_router.get("/scans/{scan_id}", response_model=user_schema.APIResponse)
