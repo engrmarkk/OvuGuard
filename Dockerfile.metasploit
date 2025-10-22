@@ -1,0 +1,11 @@
+FROM metasploitframework/metasploit-framework:latest
+
+# Use the existing msf user or create one
+USER msf
+
+WORKDIR /home/msf
+
+EXPOSE 55553 4444
+
+# Simple CMD without entrypoint complications
+CMD ["/opt/metasploit-framework/bin/msfrpcd", "-P", "password", "-S", "-f", "-a", "0.0.0.0", "-p", "55553"]
