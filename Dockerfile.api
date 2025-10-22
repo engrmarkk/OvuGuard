@@ -31,6 +31,9 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     libffi-dev \
+    curl \
+    netcat-openbsd \
+    iputils-ping \
     tzdata \
     openssl \
  && apt-get clean \
