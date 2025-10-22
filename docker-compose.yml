@@ -27,30 +27,30 @@ services:
     networks:
       - ovu_network
 
-#  metasploit:
-#    image: metasploitframework/metasploit-framework:latest
-#    container_name: metasploit-scanner
-#    ports:
-#      - "55553:55553"
-#      - "4444:4444"
-#    env_file:
-#      - .env
-#    volumes:
-#      - metasploit_data:/home/msf/.msf4
-#      - /tmp/msf:/tmp/data
-#    restart: unless-stopped
-#    command:
-#      - "/usr/src/metasploit-framework/msfrpcd"
-#      - "-P"
-#      - "password"
-#      - "-S"
-#      - "-f"
-#      - "-a"
-#      - "0.0.0.0"
-#      - "-p"
-#      - "55553"
-#    networks:
-#      - ovu_network
+  metasploit:
+    image: metasploitframework/metasploit-framework:latest
+    container_name: metasploit-scanner
+    ports:
+      - "55553:55553"
+      - "4444:4444"
+    env_file:
+      - .env
+    volumes:
+      - metasploit_data:/home/msf/.msf4
+      - /tmp/msf:/tmp/data
+    restart: unless-stopped
+    command:
+      - "/usr/src/metasploit-framework/msfrpcd"
+      - "-P"
+      - "password"
+      - "-S"
+      - "-f"
+      - "-a"
+      - "0.0.0.0"
+      - "-p"
+      - "55553"
+    networks:
+      - ovu_network
 
 networks:
   ovu_network:
