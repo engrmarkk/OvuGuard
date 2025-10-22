@@ -14,13 +14,19 @@ class ScanStatus(str, Enum):
 
 class ScanCreate(BaseModel):
     url: str
-    endpoints: List[Dict[str, str]]
+    doc_url: str
     scan_types: Optional[List[str]] = [
+        "cors",
         "sql_injection",
         "xss",
-        "ssrf",
-        "security_headers",
-        "rate_limit",
+        "csrf",
+        "rate_limiting",
+        "broken_authentication",
+        "directory_traversal",
+        "information_disclosure",
+        "http_methods",
+        "server_info",
+        "backup_files",
     ]
 
 
@@ -58,7 +64,7 @@ class ScanResultResponse(BaseModel):
     medium_count: int
     low_count: int
     security_score: float
-    discovered_endpoints: Optional[List[Dict[str, Any]]] = []
+    # discovered_endpoints: Optional[List[Dict[str, Any]]] = []
     vulnerabilities: Optional[List[Dict[str, Any]]] = []
 
     class Config:
@@ -75,3 +81,18 @@ class ScanResultResponse(BaseModel):
 class ScanListResponse(BaseModel):
     scans: List[ScanResponse]
     total: int
+
+
+# api response
+class ApiResponse(BaseModel):
+    msg: str
+    data: Any
+    pagination: Optional[Dict[str, Any]] = None
+
+    # if pagination is None pop it
+    @model_serializer
+    def serialize_model(self):
+        data = self.__dict__.copy()
+        if not self.pagination:
+            data.pop("pagination", None)
+        return data
