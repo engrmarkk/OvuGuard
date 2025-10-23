@@ -4,7 +4,13 @@ from sqlalchemy.orm import sessionmaker
 from environmentals import SQLALCHEMY_DATABASE_URI
 
 # the below is the connection to the database, the connect_args is used to avoid error
-engine = create_engine(SQLALCHEMY_DATABASE_URI, pool_pre_ping=True)
+engine = create_engine(SQLALCHEMY_DATABASE_URI,
+                       pool_pre_ping=True,  # Test connections before using
+                       pool_recycle=3600,  # Recycle connections every hour
+                       pool_timeout=30,  # 30 second timeout
+                       max_overflow=10,  # Allow 10 extra connections
+                       pool_size=5,
+                       )
 
 Db_Session = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 

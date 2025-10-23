@@ -1,5 +1,6 @@
 from fastapi import APIRouter, status, Depends, HTTPException, BackgroundTasks, Query
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import PendingRollbackError
 from helpers.res_ponse import return_response
 import schemas.scans as scan_schema
 import schemas.users as user_schema
@@ -100,6 +101,28 @@ async def list_scans(
 ):
     try:
         """List recent scans"""
+        scanner_service = ScannerService()
+        scans = await scanner_service.get_all_user_scans(
+            page=page, per_page=per_page, user_id=current_user.id
+        )
+        total = (
+            db.query(ScanResult).filter(ScanResult.user_id == current_user.id).count()
+        )
+
+        return user_schema.APIResponse(
+            msg="Scans retrieved successfully",
+            data=[
+                scan_schema.ScanResultResponse.model_validate(scan) for scan in scans
+            ],
+            pagination={
+                "total_items": total,
+                "page": page,
+                "per_page": per_page,
+                "total_pages": (total + per_page - 1) // per_page,
+            },
+        )
+    except PendingRollbackError:
+        db.rollback()
         scanner_service = ScannerService()
         scans = await scanner_service.get_all_user_scans(
             page=page, per_page=per_page, user_id=current_user.id
