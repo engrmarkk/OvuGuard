@@ -53,6 +53,7 @@ async def create_scan(
         logger.info(f"Create Scan exception: {http_exc}")
         raise http_exc
     except Exception as e:
+        db.rollback()
         logger.exception(f"Create Scan exception")
         return HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Network Error"
@@ -65,19 +66,29 @@ async def get_scan_result(
     db: Session = Depends(get_db),
     current_user: Users = Depends(get_current_user),
 ):
-    """Get scan results by ID"""
-    scanner_service = ScannerService()
-    scan_record = scanner_service.get_scan_status(scan_id, current_user.id)
+    try:
+        """Get scan results by ID"""
+        scanner_service = ScannerService()
+        scan_record = scanner_service.get_scan_status(scan_id, current_user.id)
 
-    if not scan_record:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Scan not found"
+        if not scan_record:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Scan not found"
+            )
+
+        return user_schema.APIResponse(
+            msg="Scan retrieved successfully",
+            data=scan_schema.ScanResultResponse.model_validate(scan_record),
         )
-
-    return user_schema.APIResponse(
-        msg="Scan retrieved successfully",
-        data=scan_schema.ScanResultResponse.model_validate(scan_record),
-    )
+    except HTTPException as http_exc:
+        logger.info(f"Get Scan exception: {http_exc}")
+        raise http_exc
+    except Exception as e:
+        db.rollback()
+        logger.exception(f"Get Scan exception")
+        return HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Network Error"
+        )
 
 
 @scan_router.get("/scans", response_model=user_schema.APIResponse)
@@ -87,23 +98,37 @@ async def list_scans(
     db: Session = Depends(get_db),
     current_user: Users = Depends(get_current_user),
 ):
-    """List recent scans"""
-    scanner_service = ScannerService()
-    scans = await scanner_service.get_all_user_scans(
-        page=page, per_page=per_page, user_id=current_user.id
-    )
-    total = db.query(ScanResult).filter(ScanResult.user_id == current_user.id).count()
+    try:
+        """List recent scans"""
+        scanner_service = ScannerService()
+        scans = await scanner_service.get_all_user_scans(
+            page=page, per_page=per_page, user_id=current_user.id
+        )
+        total = (
+            db.query(ScanResult).filter(ScanResult.user_id == current_user.id).count()
+        )
 
-    return user_schema.APIResponse(
-        msg="Scans retrieved successfully",
-        data=[scan_schema.ScanResultResponse.model_validate(scan) for scan in scans],
-        pagination={
-            "total_items": total,
-            "page": page,
-            "per_page": per_page,
-            "total_pages": (total + per_page - 1) // per_page,
-        },
-    )
+        return user_schema.APIResponse(
+            msg="Scans retrieved successfully",
+            data=[
+                scan_schema.ScanResultResponse.model_validate(scan) for scan in scans
+            ],
+            pagination={
+                "total_items": total,
+                "page": page,
+                "per_page": per_page,
+                "total_pages": (total + per_page - 1) // per_page,
+            },
+        )
+    except HTTPException as http_exc:
+        logger.info(f"List recent exception: {http_exc}")
+        raise http_exc
+    except Exception as e:
+        db.rollback()
+        logger.exception(f"List recent exception")
+        return HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Network Error"
+        )
 
 
 @scan_router.get("/stats", response_model=user_schema.APIResponse)
@@ -111,10 +136,20 @@ async def get_scan_stats(
     db: Session = Depends(get_db),
     current_user: Users = Depends(get_current_user),
 ):
-    """Get scan stats"""
-    scanner_service = ScannerService()
-    stats = await scanner_service.get_user_scan_stats(current_user.id)
-    return user_schema.APIResponse(
-        msg="Scan stats retrieved successfully",
-        data=stats,
-    )
+    try:
+        """Get scan stats"""
+        scanner_service = ScannerService()
+        stats = await scanner_service.get_user_scan_stats(current_user.id)
+        return user_schema.APIResponse(
+            msg="Scan stats retrieved successfully",
+            data=stats,
+        )
+    except HTTPException as http_exc:
+        logger.info(f"Get Scan Stats: {http_exc}")
+        raise http_exc
+    except Exception as e:
+        db.rollback()
+        logger.exception(f"Get Scan Stats")
+        return HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Network Error"
+        )
