@@ -154,6 +154,45 @@ async def list_scans(
         )
 
 
+@scan_router.get("/get_scans", response_model=user_schema.APIResponse)
+async def get_scans(
+    page: int = Query(1, ge=1),
+    per_page: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: Users = Depends(get_current_user),
+):
+    try:
+        scanner_service = ScannerService()
+        scans = await scanner_service.get_all_user_scans(
+            page=page, per_page=per_page, user_id=current_user.id
+        )
+        total = (
+            db.query(ScanResult).filter(ScanResult.user_id == current_user.id).count()
+        )
+
+        return user_schema.APIResponse(
+            msg="Scans retrieved successfully",
+            data=[
+                scan_schema.ScanResultResponse.model_validate(scan) for scan in scans
+            ],
+            pagination={
+                "total_items": total,
+                "page": page,
+                "per_page": per_page,
+                "total_pages": (total + per_page - 1) // per_page,
+            },
+        )
+    except HTTPException as http_exc:
+        logger.info(f"List recent exception: {http_exc}")
+        raise http_exc
+    except Exception as e:
+        db.rollback()
+        logger.exception(f"List recent exception")
+        return HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Network Error"
+        )
+
+
 @scan_router.get("/stats", response_model=user_schema.APIResponse)
 async def get_scan_stats(
     db: Session = Depends(get_db),
