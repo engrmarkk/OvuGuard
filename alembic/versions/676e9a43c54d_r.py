@@ -1,8 +1,8 @@
-"""new
+"""r
 
-Revision ID: 5cc34064bc83
-Revises: b888ebc1311a
-Create Date: 2025-10-10 10:42:12.751953
+Revision ID: 676e9a43c54d
+Revises: 
+Create Date: 2025-10-23 18:29:34.296112
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '5cc34064bc83'
-down_revision: Union[str, None] = 'b888ebc1311a'
+revision: str = '676e9a43c54d'
+down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -24,8 +24,9 @@ def upgrade() -> None:
     sa.Column('email', sa.String(length=50), nullable=True),
     sa.Column('password', sa.Text(), nullable=True),
     sa.Column('phone', sa.String(length=50), nullable=True),
-    sa.Column('full_name', sa.String(length=50), nullable=True),
-    sa.Column('company', sa.String(length=50), nullable=True),
+    sa.Column('full_name', sa.String(length=70), nullable=True),
+    sa.Column('country', sa.String(length=70), nullable=True),
+    sa.Column('company', sa.String(length=70), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=True),
     sa.Column('is_admin', sa.Boolean(), nullable=True),
     sa.Column('webhook_url', sa.Text(), nullable=True),
