@@ -46,13 +46,14 @@ from environmentals import SQLALCHEMY_DATABASE_URI
 from tenacity import retry, wait_fixed, stop_after_attempt, before_log
 from logger import logger
 import time
+import logging
 
 
 # --- STEP 1: Create engine with retry ---
 @retry(
     stop=stop_after_attempt(5),        # retry 5 times
     wait=wait_fixed(3),                # wait 3 seconds each
-    before=before_log(logger, )
+    before=before_log(logger, logging.INFO)
 )
 def create_engine_with_retry():
     return create_engine(
