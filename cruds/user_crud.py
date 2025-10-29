@@ -21,12 +21,15 @@ def get_user_id_from_request(request: Request):
 # create User
 async def create_user(
     db,
-    email: str,
-    password: str,
-    full_name: str,
-    company: str,
-    country: str,
-    phone: str,
+    email,
+    password,
+    full_name,
+    company,
+    country,
+    phone,
+    registration_type,
+    company_size,
+    industry,
 ):
     user = Users(
         email=email,
@@ -35,6 +38,9 @@ async def create_user(
         company=company,
         country=country,
         phone=phone,
+        registration_type=registration_type,
+        company_size=company_size,
+        industry=industry,
     )
     db.add(user)
     db.commit()

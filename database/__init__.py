@@ -7,18 +7,18 @@
 # engine = create_engine(
 #     SQLALCHEMY_DATABASE_URI,
 #     pool_pre_ping=True,
-    # pool_recycle=300,
-    # pool_timeout=30,
-    # max_overflow=10,
-    # pool_size=5,
-    # echo_pool=True,
-    # connect_args={
-    #     "keepalives": 1,
-    #     "keepalives_idle": 30,
-    #     "keepalives_interval": 10,
-    #     "keepalives_count": 5,
-    #     "connect_timeout": 30,
-    # },
+# pool_recycle=300,
+# pool_timeout=30,
+# max_overflow=10,
+# pool_size=5,
+# echo_pool=True,
+# connect_args={
+#     "keepalives": 1,
+#     "keepalives_idle": 30,
+#     "keepalives_interval": 10,
+#     "keepalives_count": 5,
+#     "connect_timeout": 30,
+# },
 # )
 
 # Db_Session = sessionmaker(bind=engine, autoflush=False, autocommit=False)
@@ -51,15 +51,15 @@ import logging
 
 # --- STEP 1: Create engine with retry ---
 @retry(
-    stop=stop_after_attempt(5),        # retry 5 times
-    wait=wait_fixed(3),                # wait 3 seconds each
-    before=before_log(logger, logging.INFO)
+    stop=stop_after_attempt(5),  # retry 5 times
+    wait=wait_fixed(3),  # wait 3 seconds each
+    before=before_log(logger, logging.INFO),
 )
 def create_engine_with_retry():
     return create_engine(
         SQLALCHEMY_DATABASE_URI,
-        pool_pre_ping=True,            # checks connection before using
-        pool_recycle=1800,             # recycle every 30 minutes
+        pool_pre_ping=True,  # checks connection before using
+        pool_recycle=1800,  # recycle every 30 minutes
         connect_args={
             "keepalives": 1,
             "keepalives_idle": 30,
@@ -69,9 +69,11 @@ def create_engine_with_retry():
         },
     )
 
+
 engine = create_engine_with_retry()
 Db_Session = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 Base = declarative_base()
+
 
 # --- STEP 2: Create resilient DB session ---
 def get_db():

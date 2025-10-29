@@ -55,6 +55,9 @@ async def register(request_data: user_schema.SignUp, db: Session = Depends(get_d
         request_data.company,
         request_data.country,
         request_data.phone,
+        request_data.registration_type,
+        request_data.company_size,
+        request_data.industry,
     )
     return return_response(
         "User created successfully", {"token": create_access_token({"sub": user.id})}

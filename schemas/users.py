@@ -21,6 +21,9 @@ class UserResponse(BaseModel):
     country: str
     phone: str
     company: str
+    company_size: str
+    industry: str
+    registration_type: str
 
 
 class User(BaseModel):
@@ -76,12 +79,15 @@ class Consent(BaseModel):
 
 
 class SignUp(BaseModel):
-    full_name: str
+    full_name: Optional[str] = None
     email: EmailStr
     password: str
-    country: str
-    phone: str
-    company: str
+    country: Optional[str] = None
+    phone: Optional[str] = None
+    company: Optional[str] = None
+    company_size: Optional[str] = None
+    industry: Optional[str] = None
+    registration_type = str
 
 
 class LogIn(BaseModel):
