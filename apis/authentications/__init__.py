@@ -51,11 +51,12 @@ async def register(request_data: user_schema.SignUp, db: Session = Depends(get_d
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Email already exists"
         )
-    if request_data.phone and phone_number_exist(db, request_data.phone):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Phone number already exists",
-        )
+    if request_data.phone:
+        if await phone_number_exist(db, request_data.phone):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Phone number already exists",
+            )
     user = await create_user(
         db,
         normalized_email,
