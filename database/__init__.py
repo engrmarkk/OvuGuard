@@ -47,6 +47,7 @@ from tenacity import retry, wait_fixed, stop_after_attempt, before_log
 from logger import logger
 import time
 import logging
+from fastapi import HTTPException
 
 
 # --- STEP 1: Create engine with retry ---
@@ -78,13 +79,20 @@ Base = declarative_base()
 # --- STEP 2: Create resilient DB session ---
 def get_db():
     db = None
-    for attempt in range(3):  # retry session if SSL connection drops
+    for attempt in range(3):
         try:
             db = Db_Session()
             yield db
             break
+        except HTTPException:
+            # ❌ DON'T retry HTTP exceptions - re-raise immediately
+            raise
         except Exception as e:
-            logger.warning(f"DB session error ({e}), retrying in 2s...")
+            # Only retry on actual database connection errors
+            if attempt == 2:  # Last attempt
+                logger.error(f"DB connection failed after 3 attempts: {e}")
+                raise
+            logger.warning(f"DB connection error ({e}), retrying in 2s...")
             time.sleep(2)
         finally:
             if db:
