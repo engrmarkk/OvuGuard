@@ -4,7 +4,7 @@ from helpers.res_ponse import return_response
 import schemas.users as user_schema
 from security import get_db, create_access_token
 from helpers import verify_password
-from cruds import email_exists, create_user
+from cruds import email_exists, create_user, phone_number_exist
 from logger import logger
 from helpers import validate_correct_email, validate_phone_number
 
@@ -32,6 +32,10 @@ async def login(request_data: user_schema.LogIn, db: Session = Depends(get_db)):
 # register
 @auth_router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(request_data: user_schema.SignUp, db: Session = Depends(get_db)):
+    if request_data.registration_type not in ["individual", "company"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Registration Type"
+        )
     is_valid, normalized_email = await validate_correct_email(request_data.email)
     if not is_valid:
         raise HTTPException(
@@ -46,6 +50,11 @@ async def register(request_data: user_schema.SignUp, db: Session = Depends(get_d
     if user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Email already exists"
+        )
+    if request_data.phone and phone_number_exist(db, request_data.phone):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Phone number already exists",
         )
     user = await create_user(
         db,
