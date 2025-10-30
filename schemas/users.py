@@ -87,7 +87,7 @@ class SignUp(BaseModel):
     company: Optional[str] = None
     company_size: Optional[str] = None
     industry: Optional[str] = None
-    registration_type = str
+    registration_type: str
 
 
 class LogIn(BaseModel):
