@@ -10,6 +10,10 @@ async def email_exists(db, email: str):
     return db.query(Users).filter(Users.email.ilike(email)).first()
 
 
+async def phone_number_exist(db, phone_number):
+    return db.query(Users).filter(Users.phone == phone_number).first()
+
+
 def get_user_id_from_request(request: Request):
     user_id = request.state.user_id
     logger.info(f"user_id: {user_id}")
