@@ -2,6 +2,7 @@ import pymetasploit3.msfrpc as msfrpc
 import requests
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
+from environmentals import METASPLOIT_HOST
 
 # Store original __init__
 _original_init = msfrpc.MsfRpcClient.__init__
@@ -10,7 +11,7 @@ _original_init = msfrpc.MsfRpcClient.__init__
 def _fixed_init(self, password, **kwargs):
     """Complete fix for Metasploit Docker connectivity"""
     # Get the actual server (default to 'metasploit' for Docker)
-    server = kwargs.get("server", "metasploit")
+    server = kwargs.get("server", METASPLOIT_HOST)
     port = kwargs.get("port", 55553)
 
     # Force the server to be used
